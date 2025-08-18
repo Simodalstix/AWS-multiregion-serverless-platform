@@ -31,6 +31,31 @@ class CoreServicesStack(Stack):
             time_to_live_attribute="ttl"
         )
 
+        # Create Products Table
+        self.products_table = dynamodb.Table(
+            self, "ProductsTable",
+            partition_key=dynamodb.Attribute(
+                name="productId",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            replication_regions=[region for region in ["us-west-2", "ap-southeast-2"] if region != Stack.of(self).region],
+            removal_policy=RemovalPolicy.RETAIN
+        )
+
+        # Create Inventory Table
+        self.inventory_table = dynamodb.Table(
+            self, "InventoryTable",
+            partition_key=dynamodb.Attribute(
+                name="productId",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            stream=dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
+            replication_regions=[region for region in ["us-west-2", "ap-southeast-2"] if region != Stack.of(self).region],
+            removal_policy=RemovalPolicy.RETAIN
+        )
+
         # Add GSIs for querying
         self.orders_table.add_global_secondary_index(
             index_name="CustomerOrders",
@@ -52,6 +77,19 @@ class CoreServicesStack(Stack):
             ),
             sort_key=dynamodb.Attribute(
                 name="timestamp",
+                type=dynamodb.AttributeType.STRING
+            )
+        )
+
+        # Add GSI for products by category
+        self.products_table.add_global_secondary_index(
+            index_name="CategoryIndex",
+            partition_key=dynamodb.Attribute(
+                name="category",
+                type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="name",
                 type=dynamodb.AttributeType.STRING
             )
         )
@@ -89,6 +127,20 @@ class CoreServicesStack(Stack):
             value=self.orders_table.table_name,
             description="DynamoDB Orders Table Name",
             export_name=f"{self.stack_name}-OrdersTableName"
+        )
+
+        CfnOutput(
+            self, "ProductsTableName",
+            value=self.products_table.table_name,
+            description="DynamoDB Products Table Name",
+            export_name=f"{self.stack_name}-ProductsTableName"
+        )
+
+        CfnOutput(
+            self, "InventoryTableName",
+            value=self.inventory_table.table_name,
+            description="DynamoDB Inventory Table Name",
+            export_name=f"{self.stack_name}-InventoryTableName"
         )
 
         CfnOutput(

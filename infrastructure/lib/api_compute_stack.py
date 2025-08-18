@@ -14,7 +14,8 @@ from constructs import Construct
 
 class ApiComputeStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, 
-                 event_bus_arn: str, orders_table_name: str, 
+                 event_bus_arn: str, orders_table_name: str,
+                 products_table_name: str, inventory_table_name: str,
                  vpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -39,7 +40,11 @@ class ApiComputeStack(Stack):
                     "dynamodb:Query",
                     "dynamodb:Scan"
                 ],
-                resources=[f"arn:aws:dynamodb:*:*:table/{orders_table_name}*"]
+                resources=[
+                    f"arn:aws:dynamodb:*:*:table/{orders_table_name}*",
+                    f"arn:aws:dynamodb:*:*:table/{products_table_name}*",
+                    f"arn:aws:dynamodb:*:*:table/{inventory_table_name}*"
+                ]
             )
         )
 
@@ -77,6 +82,52 @@ class ApiComputeStack(Stack):
             vpc=vpc,
             environment={
                 "ORDERS_TABLE": orders_table_name
+            }
+        )
+
+        # Product functions
+        get_products_fn = lambda_.Function(
+            self, "GetProductsFunction",
+            runtime=lambda_.Runtime.PYTHON_3_9,
+            handler="get_products.handler",
+            code=lambda_.Code.from_asset("src/functions/product"),
+            role=lambda_role,
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            vpc=vpc,
+            environment={
+                "PRODUCTS_TABLE": products_table_name
+            }
+        )
+
+        # Inventory function
+        inventory_fn = lambda_.Function(
+            self, "InventoryFunction",
+            runtime=lambda_.Runtime.PYTHON_3_9,
+            handler="check_stock.handler",
+            code=lambda_.Code.from_asset("src/functions/inventory"),
+            role=lambda_role,
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            vpc=vpc,
+            environment={
+                "INVENTORY_TABLE": inventory_table_name,
+                "EVENT_BUS_ARN": event_bus_arn
+            }
+        )
+
+        # Payment function
+        payment_fn = lambda_.Function(
+            self, "PaymentFunction",
+            runtime=lambda_.Runtime.PYTHON_3_9,
+            handler="process_payment.handler",
+            code=lambda_.Code.from_asset("src/functions/payment"),
+            role=lambda_role,
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            vpc=vpc,
+            environment={
+                "EVENT_BUS_ARN": event_bus_arn
             }
         )
 
@@ -164,6 +215,42 @@ class ApiComputeStack(Stack):
             allow_origins=["*"],
             allow_methods=["GET", "POST", "OPTIONS"],
             allow_headers=["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"]
+        )
+
+        # Products endpoints
+        products = api.root.add_resource("products")
+        products.add_method(
+            "GET",
+            apigateway.LambdaIntegration(get_products_fn, proxy=True)
+        )
+        products.add_cors_preflight(
+            allow_origins=["*"],
+            allow_methods=["GET", "OPTIONS"],
+            allow_headers=["Content-Type"]
+        )
+
+        # Inventory endpoints
+        inventory = api.root.add_resource("inventory")
+        inventory.add_method(
+            "POST",
+            apigateway.LambdaIntegration(inventory_fn, proxy=True)
+        )
+        inventory.add_cors_preflight(
+            allow_origins=["*"],
+            allow_methods=["POST", "OPTIONS"],
+            allow_headers=["Content-Type"]
+        )
+
+        # Payment endpoints
+        payments = api.root.add_resource("payments")
+        payments.add_method(
+            "POST",
+            apigateway.LambdaIntegration(payment_fn, proxy=True)
+        )
+        payments.add_cors_preflight(
+            allow_origins=["*"],
+            allow_methods=["POST", "OPTIONS"],
+            allow_headers=["Content-Type"]
         )
 
         # Outputs

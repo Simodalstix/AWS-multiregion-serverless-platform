@@ -1,27 +1,19 @@
-# Serverless Multi-Region E-commerce Platform with Security and Monitoring
+# Serverless Multi-Region E-commerce Platform
 
 ![Architecture Overview](screenshots/AWS-multiregion-ecommerce.png)
 
 ## Overview
 
-This project is a **serverless, event-driven e-commerce platform** built on AWS with **multi-region high availability** and **disaster recovery** capabilities. The architecture provides automatic failover between AWS regions (Australia and US West) and includes comprehensive enterprise security and monitoring features, including SIEM integration and compliance capabilities.
+This project is a **serverless, event-driven e-commerce platform** built on AWS with **multi-region high availability** and **disaster recovery** capabilities. The platform demonstrates modern cloud-native architecture patterns for building scalable e-commerce applications.
 
 ### Core Features
 
 - **Serverless Architecture**: No servers to manage, auto-scaling infrastructure
-- **Multi-Region Deployment**: Active-active configuration across AWS regions
+- **Multi-Region Deployment**: Active-active configuration across AWS regions (Australia + US West)
 - **Event-Driven Design**: Loose coupling between services via EventBridge
-- **Disaster Recovery**: Automatic failover capabilities (manual activation currently, with plans for enhanced automation)
+- **Global Database**: DynamoDB Global Tables for multi-region data replication
 - **CI/CD Pipeline**: Automated deployments via CodePipeline and CodeBuild
-
-### Additional Enterprise Features
-
-The platform includes optional stacks for enterprise requirements:
-
-- **Security Monitoring**: GuardDuty, Security Hub, and Detective integration
-- **Centralized Logging**: Security Lake with OCSF normalization
-- **SIEM Integration**: Connect to OpenSearch, Splunk, or Elastic for security analytics
-- **Compliance**: AWS Config rules and conformance packs
+- **Real E-commerce Features**: Product catalog, inventory management, order processing
 
 ## Getting Started
 
@@ -61,9 +53,9 @@ This project gives you a **production-ready e-commerce backend** with:
 - ✅ **Multi-region high availability** (Australia + US West)
 - ✅ **Serverless architecture** (no servers to manage)
 - ✅ **Auto-scaling** (handles any traffic volume)
-- ✅ **Disaster recovery** (automatic failover with manual activation currently)
+- ✅ **Disaster recovery** (automatic failover capabilities)
 - ✅ **Event-driven design** (extensible for new features)
-- ✅ **Security and monitoring** (comprehensive enterprise features including SIEM integration)
+- ✅ **Complete e-commerce workflow** (products, inventory, orders, payments)
 
 ## 📁 Project Structure - What Matters
 
@@ -73,10 +65,13 @@ This project gives you a **production-ready e-commerce backend** with:
 │   ├── network_stack.py       # VPC, subnets (required)
 │   ├── core_services_stack.py # DynamoDB tables (required)
 │   ├── api_compute_stack.py   # API Gateway + Lambda (required)
-│   ├── pipeline_stack.py      # CI/CD (optional - for automation)
-│   └── security/              # Enterprise security (optional)
+│   └── pipeline_stack.py      # CI/CD (optional - for automation)
 ├── src/functions/             # Your actual business logic
-└── docs/                      # Documentation (this file!)
+│   ├── order/                 # Order management
+│   ├── inventory/             # Inventory tracking
+│   ├── payment/               # Payment processing
+│   └── notification/          # Customer notifications
+└── docs/                      # Documentation
 ```
 
 ## 🎯 Deployment Options - Pick Your Path
@@ -130,24 +125,22 @@ curl -X POST https://YOUR-API-URL/prod/orders \
 curl https://YOUR-API-URL/prod/orders/YOUR-ORDER-ID
 ```
 
-## 🛡️ Security Features (Advanced)
+## 🛒 E-commerce Features
 
-The security components are **completely optional** enterprise features:
+The platform includes complete e-commerce functionality:
 
-- **Security Lake**: Centralized security logging
-- **SIEM Integration**: Connect to Splunk, Elastic, or OpenSearch
-- **GuardDuty**: Threat detection
-- **Security Hub**: Security compliance monitoring
-
-**Skip these initially!** Focus on getting the core e-commerce system working first.
-
-See [SECURITY-LAKE.md](docs/SECURITY-LAKE.md) for security documentation (but only after core system works).
+- **Product Catalog**: Browse and search products
+- **Inventory Management**: Real-time stock tracking
+- **Order Processing**: Complete order lifecycle
+- **Payment Integration**: Secure payment processing
+- **Customer Notifications**: Order status updates
+- **Multi-region Sync**: Global data consistency
 
 ## 📚 Detailed Documentation
 
 - [Setup Guide](docs/setup.md) - Complete setup instructions
 - [Architecture](docs/architecture.md) - Technical architecture details
-- [Security Lake](docs/SECURITY-LAKE.md) - Security and SIEM integration
+- [Getting Started](docs/GETTING-STARTED.md) - Quick start guide
 
 ## 🎯 Key Files You Should Know
 

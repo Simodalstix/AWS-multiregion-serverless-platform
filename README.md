@@ -35,7 +35,13 @@ aws configure
 cdk bootstrap aws://YOUR-ACCOUNT-ID/ap-southeast-2
 
 # Deploy core infrastructure
+./deploy-core.sh
+
+# Or manually
 cdk deploy PrimaryNetworkStack PrimaryCoreStack PrimaryApiStack --app "python app-stacks.py"
+
+# Seed sample data
+python scripts/seed_data.py PrimaryCoreStack-ProductsTable PrimaryCoreStack-InventoryTable
 
 # Test your API
 API_URL=$(aws cloudformation describe-stacks --stack-name PrimaryApiStack --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' --output text)
@@ -116,31 +122,69 @@ python -m pytest tests/ -v
 # Get your API endpoint
 aws cloudformation describe-stacks --stack-name PrimaryApiStack --query 'Stacks[0].Outputs'
 
-# Test creating an order
+# Use the test script
+./scripts/test_api.sh https://YOUR-API-URL/prod
+
+# Or test manually
+curl -X GET https://YOUR-API-URL/prod/products
 curl -X POST https://YOUR-API-URL/prod/orders \
   -H "Content-Type: application/json" \
-  -d '{"customerId": "123", "items": [{"id": "item1", "quantity": 1, "price": 29.99}]}'
-
-# Test getting an order
-curl https://YOUR-API-URL/prod/orders/YOUR-ORDER-ID
+  -d '{"customerId": "123", "items": [{"id": "prod-001", "quantity": 1, "price": 199.99}]}'
 ```
 
 ## 🛒 E-commerce Features
 
 The platform includes complete e-commerce functionality:
 
-- **Product Catalog**: Browse and search products
-- **Inventory Management**: Real-time stock tracking
-- **Order Processing**: Complete order lifecycle
-- **Payment Integration**: Secure payment processing
-- **Customer Notifications**: Order status updates
-- **Multi-region Sync**: Global data consistency
+- **Product Catalog**: Browse and search products with categories
+- **Inventory Management**: Real-time stock tracking with atomic updates
+- **Order Processing**: Complete order lifecycle with event-driven workflow
+- **Payment Integration**: Simulated payment processing (Stripe-ready)
+- **Event-Driven Architecture**: EventBridge for loose coupling
+- **Multi-region Sync**: DynamoDB Global Tables for data consistency
+
+### API Endpoints
+
+```bash
+# Products
+GET /products                    # List all products
+GET /products?category=Electronics  # Filter by category
+
+# Orders
+POST /orders                     # Create new order
+GET /orders/{orderId}            # Get order details
+
+# Inventory
+POST /inventory                  # Check/reserve stock
+
+# Payments
+POST /payments                   # Process payment
+```
 
 ## 📚 Detailed Documentation
 
 - [Setup Guide](docs/setup.md) - Complete setup instructions
 - [Architecture](docs/architecture.md) - Technical architecture details
 - [Getting Started](docs/GETTING-STARTED.md) - Quick start guide
+
+## 🎯 Inspiration & Learning Resources
+
+This project demonstrates patterns from these excellent resources:
+
+### AWS Architecture Blogs
+- [Building event-driven architectures on AWS](https://aws.amazon.com/blogs/compute/building-event-driven-architectures-on-aws/)
+- [Multi-Region Serverless Backend](https://aws.amazon.com/blogs/compute/building-a-multi-region-serverless-backend-for-a-web-application/)
+- [DynamoDB Global Tables Best Practices](https://aws.amazon.com/blogs/database/how-to-use-amazon-dynamodb-global-tables-to-power-multiregion-architecture/)
+
+### Serverless E-commerce Patterns
+- [Serverless E-commerce Platform on AWS](https://aws.amazon.com/solutions/implementations/serverless-ecommerce-platform/)
+- [Event-driven microservices with EventBridge](https://aws.amazon.com/blogs/compute/using-amazon-eventbridge-to-build-decoupled-fault-tolerant-applications/)
+- [Building resilient serverless systems](https://aws.amazon.com/builders-library/reliability-and-constant-work/)
+
+### Real-World Implementation Examples
+- **Netflix**: Multi-region disaster recovery patterns
+- **Airbnb**: Event-driven inventory management
+- **Stripe**: Payment processing architecture patterns
 
 ## 🎯 Key Files You Should Know
 
